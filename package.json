@@ -1,0 +1,22 @@
+{
+  "name": "project-api-mysql",
+  "version": "1.0.0",
+  "description": "Mysql-express-node",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "Mysql"
+  ],
+  "author": "Ilham Bakhti",
+  "license": "ISC",
+  "dependencies": {
+    "@sendgrid/mail": "^6.3.1",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "express": "^4.16.4",
+    "mysql": "github:mysqljs/mysql",
+    "validator": "^10.11.0"
+  }
+}
