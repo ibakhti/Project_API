@@ -46,6 +46,7 @@ router.get('/users/login', (req, res) => {
     })
 });
 
+//-----------GET USER--------------------//
 router.get('/users', (req, res) => {
     const {id} = req.query;
     const sql = `SELECT * FROM users WHERE userId = ${id}`
@@ -55,6 +56,16 @@ router.get('/users', (req, res) => {
     })
 })
 
+//------------UPDATE USER---------------//
+router.put('/users/update/:userId', (req, res) => {
+    const data = [req.body, req.params.userId];
+    const sql = `UPDATE users SET ? WHERE userId = ?`;
+    
+    conn.query(sql, data, (err, result) => {
+        if(err) return res.status(400).send(err.sqlMessage)
+        res.send(result)
+    })
+})
 
 
 
