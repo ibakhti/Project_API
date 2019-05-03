@@ -54,7 +54,7 @@ router.get('/users', (req, res) => {
     conn.query(sql, (err, result) => {
         err ? res.status(400).send(err.sqlMessage) : res.send(result)
     })
-})
+});
 
 //------------UPDATE USER---------------//
 router.put('/users/update/:userId', (req, res) => {
@@ -64,6 +64,20 @@ router.put('/users/update/:userId', (req, res) => {
     conn.query(sql, data, (err, result) => {
         if(err) return res.status(400).send(err.sqlMessage)
         res.send(result)
+    })
+});
+
+//-----------CHANGED PASSWORD-----------//
+router.put('/users/pass/:userId', async (req, res) => {
+    const data = req.body;
+    const sql = `UPDATE users SET ? WHERE userId = ${req.params.userId}`;
+
+    data.password = await bcrypt.hash(data.password, 8);
+
+    conn.query(sql, data, (err, result) => {
+        if (err) return res.status(400).send(err.sqlMessage)
+
+        res.send(result);
     })
 })
 
