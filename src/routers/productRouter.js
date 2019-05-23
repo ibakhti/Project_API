@@ -129,12 +129,25 @@ router.get('/cart', (req, res) => {
 
 //-----------------REMOVE CART-----------------//
 router.delete('/cart/remove', (req, res) => {
-    const sql = `DELETE FROM cart WHERE userId = ${req.body.userId} AND sku = ${req.body.sku}`
+    const sql1 = `SELECT quantity FROM cart WHERE userId = ${req.body.userId} AND sku = ${req.body.sku}`
+    const sql2 = `DELETE FROM cart WHERE userId = ${req.body.userId} AND sku = ${req.body.sku}`
 
-    conn.query(sql, (err, result) => {
-        if(err) return res.status(400).status(err.sqlMessage)
+    conn.query(sql1, (err, result1) => {
+        if(err) return res.status(400).send("err1 " + err.sqlMessage)
 
-        res.status(200).send(result)
+        if(result1[0].quantity === 1){
+            conn.query(sql2, (err, result2) => {
+                if(err) return res.status(400).send("err2 " + err.sqlMessage)
+
+                res.send(result2)
+            })
+        }else (
+            conn.query(`UPDATE cart SET quantity = ${result1[0].quantity - 1} WHERE userId = ${req.body.userId} AND sku = ${req.body.sku}`, (err, result3) => {
+                if(err) return res.status(400).send("err3 " + err.sqlMessage)
+
+                res.send(result3)
+            })
+        )
     })
 })
 
