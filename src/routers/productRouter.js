@@ -127,5 +127,15 @@ router.get('/cart', (req, res) => {
     })
 })
 
+//-----------------REMOVE CART-----------------//
+router.delete('/cart/remove', (req, res) => {
+    const sql = `DELETE FROM cart WHERE userId = ${req.body.userId} AND sku = ${req.body.sku}`
+
+    conn.query(sql, (err, result) => {
+        if(err) return res.status(400).status(err.sqlMessage)
+
+        res.status(200).send(result)
+    })
+})
 
 module.exports = router;
