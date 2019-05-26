@@ -93,20 +93,21 @@ router.get('/product/detail', (req, res) => {
 //------ADD TO CART----------//
 router.put('/cart/add', (req, res) => {
     const data = req.body
-    const sql = `SELECT quantity FROM cart WHERE userId=${data.userId} AND sku =${data.sku}`
+    const sql = `SELECT quantity FROM cart WHERE userId=${data.userId} AND productId = ${data.productId}`
     const sql2 = 'INSERT INTO cart SET ?'
 
     conn.query(sql, (err, result) => {
         if(err) return res.status(400).send("err: " + err.sqlMessage)
 
         if(result.length == 0){
-            conn.query(sql2, data, (req, result2) => {
+            conn.query(sql2, data, (err, result2) => {
                 if(err) return res.status(400).send("err2: " +err.sqlMessage);
 
                 res.status(200).send(result2)
             })
         }else {
-            conn.query(`UPDATE cart SET quantity=${result[0].quantity + 1} WHERE userId=${data.userId} AND sku =${data.sku}`, (err, result3) => {
+            const sql3 = `UPDATE cart SET quantity=${result[0].quantity + 1} WHERE userId = ${data.userId} AND productId = ${data.productId}`
+            conn.query(sql3, (err, result3) => {
                 if(err) return res.status(400).send("err3 " + err.sqlMessage)
 
                 res.status(200).send(result3)
@@ -114,6 +115,37 @@ router.put('/cart/add', (req, res) => {
         } 
     })
 });
+
+//-----------------UPDATE STOCK DISPLAY AFTER ADD TO CART-------------//
+router.put('/product/stock/update/minus', (req, res) => {
+    const sql = `SELECT stockDisplay FROM productSizeAndStock WHERE productId=${req.body.productId}`
+
+    conn.query(sql, (err, result) => {
+        if(err) return res.status(400).send(err.sqlMessage)
+        const sql2 = `UPDATE productSizeAndStock SET stockDisplay = ${result[0].stockDisplay - 1} WHERE productId=${req.body.productId}`
+        conn.query(sql2, (err, result2) => {
+            if(err) return res.status(400).send("err2: " + err.sqlMessage)
+
+            res.status(200).send(result2)
+        })
+    })
+})
+//-----------UPDATE DATA WHEN REMOVE CART-------------//
+router.put('/product/stock/update/plus', (req, res) => {
+    const sql = `SELECT stockDisplay FROM productSizeAndStock WHERE productId=${req.body.productId}`
+
+    conn.query(sql, (err, result) => {
+        if(err) return res.status(400).send(err.sqlMessage)
+        
+        const sql2 = `UPDATE productSizeAndStock SET stockDisplay = ${result[0].stockDisplay + 1} WHERE productId=${req.body.productId}`
+        conn.query(sql2, (err, result2) => {
+            if(err) return res.status(400).send("err2: " + err.sqlMessage)
+
+            res.status(200).send(result2)
+        })
+    })
+})
+
 
 //-----------------GET CART-----------------//
 router.get('/cart', (req, res) => {
@@ -129,8 +161,8 @@ router.get('/cart', (req, res) => {
 
 //-----------------REMOVE CART-----------------//
 router.delete('/cart/remove', (req, res) => {
-    const sql1 = `SELECT quantity FROM cart WHERE userId = ${req.body.userId} AND sku = ${req.body.sku}`
-    const sql2 = `DELETE FROM cart WHERE userId = ${req.body.userId} AND sku = ${req.body.sku}`
+    const sql1 = `SELECT quantity FROM cart WHERE userId = ${req.body.userId} AND productId=${req.body.productId}`
+    const sql2 = `DELETE FROM cart WHERE userId = ${req.body.userId} AND productId=${req.body.productId}`
 
     conn.query(sql1, (err, result1) => {
         if(err) return res.status(400).send("err1 " + err.sqlMessage)
@@ -141,13 +173,14 @@ router.delete('/cart/remove', (req, res) => {
 
                 res.send(result2)
             })
-        }else (
-            conn.query(`UPDATE cart SET quantity = ${result1[0].quantity - 1} WHERE userId = ${req.body.userId} AND sku = ${req.body.sku}`, (err, result3) => {
+        }else {
+            const sql3 = `UPDATE cart SET quantity = ${result1[0].quantity - 1} WHERE userId = ${req.body.userId} AND productId = ${req.body.productId}`
+            conn.query(sql3, (err, result3) => {
                 if(err) return res.status(400).send("err3 " + err.sqlMessage)
 
                 res.send(result3)
             })
-        )
+        }
     })
 })
 
