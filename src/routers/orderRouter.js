@@ -99,4 +99,40 @@ router.get("/payment", (req, res) => {
   })
 })
 
+//-------INPUT ORDER----------//
+router.put("/order", (req, res) => {
+  const data = req.body;
+  const sql = `INSERT INTO orders SET ?`
+
+  conn.query(sql, data, (err, result, fields) => {
+    if(err) return res.status(400).send(err.sqlMessage);
+
+    res.status(200).send(result)
+  })
+})
+
+//---------INPUT ORDER DETAIL-----//
+router.put("/orderdetail", (req, res) => {
+  const data = req.body.items;
+  const sql = `INSERT INTO orderDetails (orderId, productId, unitPrice, quantity) VALUE ?`;
+  
+  const value = data.reduce((o, a) => {
+    let ar= []
+    ar.push(a.orderId)
+    ar.push(a.productId)
+    ar.push(a.unitPrice)
+    ar.push(a.quantity)
+    o.push(ar)
+    return o
+  }, [])
+
+  // console.log(value)
+  conn.query(sql, [value], (err, result) => {
+    if(err) return res.status(400).send(err.sqlMessage)
+
+    res.send(result)
+  });
+  
+});
+
 module.exports = router;
