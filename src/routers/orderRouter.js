@@ -93,11 +93,22 @@ router.get("/payment", (req, res) => {
   const sql = `SELECT * FROM payments`
 
   conn.query(sql, (err, result) => {
-    if(err) return res.status(400).send(err.sqlMessage);
+    if(err) return res.send(err.sqlMessage);
 
     res.status(200).send(result)
   })
 })
+
+// -------GET PAYMENT ID------------//
+router.get("/payment/:paymentId", (req, res) => {
+  const sql = `SELECT paymentName, noRek, paymentImg FROM payments WHERE paymentId = ${req.params.paymentId}`
+
+  conn.query(sql, (err, result) => {
+    if(err) return res.status(400).send(err.sqlMessage);
+
+    res.status(200).send(result)
+  });
+});
 
 //-------INPUT ORDER----------//
 router.put("/order", (req, res) => {
