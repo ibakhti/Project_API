@@ -4,6 +4,7 @@ const multer = require('multer');
 const path = require('path')
 
 const uploadDir = path.join(__dirname + '/../../paymentPict/');
+const upDirtrf = path.join(__dirname + '/../../trfPict')
 
 //----------GET ITMES FOR CHECKOUT-----------//
 router.get("/checkout", (req, res) => {
@@ -146,4 +147,43 @@ router.put("/orderdetail", (req, res) => {
   
 });
 
+
+// ----------UPLOAD PAYMENT SLIP PICT------------//
+const Store = multer.diskStorage({
+  destination: function(req, file, cb) {
+      cb(null, upDirtrf)
+  },
+  filename: function(req, file, cb){
+      cb(null, Date.now() + file.originalname)
+  }
+})
+
+const up = multer({
+  storage:Store,
+  limits: {
+      fileSize: 2000000
+  },
+  fileFilter(req, file, cb){
+      if(!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+          //tolak
+          return cb(new Error('please upload image file (jpg, jpeg, png)'))
+      }
+      
+      cb(undefined, true)
+  }
+});
+
+router.put('/payslip', up.single("payslip"), (req, res) => {
+  const sql = `UPDATE orders SET transferImg = '${req.file.filename}', paymentDate = current_timestamp() WHERE orderId = ${req.body.orderId}`
+
+  conn.query(sql, (err, result) => {
+    if(err) return res.status(400).send(err.sqlMessage);
+
+    res.status(200).send({result, url:`http://localhost:8080/payslip/picture/${req.file.filename}`})
+  })
+})
+
+router.get('/payslip/picture/:img', (req, res) => {
+  res.sendFile(upDirtrf + '/' + req.params.img)
+})
 module.exports = router;

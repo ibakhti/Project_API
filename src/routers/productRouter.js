@@ -184,4 +184,14 @@ router.delete('/cart/remove', (req, res) => {
     })
 })
 
+//---------DELETE ALL CART AFTER CHECKOUT----------//
+router.delete('/allcart', (req, res) => {
+    const sql = `DELETE FROM cart WHERE userId = ${req.body.userId}`
+
+    conn.query(sql, (err, result) => {
+        if(err) return res.status(400).send(err.sqlMessage)
+
+        res.status(200).send(result)
+    })
+}) 
 module.exports = router;
