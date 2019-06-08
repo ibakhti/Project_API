@@ -126,12 +126,14 @@ router.put("/order", (req, res) => {
 //---------INPUT ORDER DETAIL-----//
 router.put("/orderdetail", (req, res) => {
   const data = req.body.items;
-  const sql = `INSERT INTO orderDetails (orderId, productId, unitPrice, quantity) VALUE ?`;
+  const sql = `INSERT INTO orderDetails (orderId, productId, productName, size, unitPrice, quantity) VALUE ?`;
   
   const value = data.reduce((o, a) => {
     let ar= []
     ar.push(a.orderId)
     ar.push(a.productId)
+    ar.push(a.productName)
+    ar.push(a.size)
     ar.push(a.unitPrice)
     ar.push(a.quantity)
     o.push(ar)
@@ -185,5 +187,21 @@ router.put('/payslip', up.single("payslip"), (req, res) => {
 
 router.get('/payslip/picture/:img', (req, res) => {
   res.sendFile(upDirtrf + '/' + req.params.img)
+})
+
+// ----------ORDER HISTORY---------//
+router.get('/order/history', (req, res) => {
+  const sql1 = `SELECT * FROM userOrderHistoryView WHERE userId = ${req.query.userId}`
+  const sql2 = `SELECT * FROM orderDetailView WHERE userId = ${req.query.userId}`;
+
+  conn.query(sql1, (err, result1) => {
+    if(err) return res.status(400).send(err.sqlMessage)
+
+    conn.query(sql2, (err, result) => {
+      if(err) return res.status(400).send(err.sqlMessage)
+
+      res.status(200).send([result1, result])
+    })
+  })
 })
 module.exports = router;
