@@ -1,7 +1,41 @@
 const router = require('express').Router();
+const multer = require("multer");
+const path = require("path");
 
 const {userControl} = require('./../controllers/index')
+const uploadDir = path.join(__dirname + "/../../avatar/");
 
+
+
+//---------UPLOAD AVATAR--------------//
+const Storage = multer.diskStorage({
+    destination: function(req, file, cb) {
+      cb(null, uploadDir);
+    },
+    filename: function(req, file, cb) {
+      cb(null, Date.now() + file.originalname);
+    }
+  });
+  
+  const upload = multer({
+    storage: Storage,
+    limits: {
+      fileSize: 8000000
+    },
+    fileFilter(req, file, cb) {
+      if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+        //tolak
+        return cb(new Error("please upload image file (jpg, jpeg, png)"));
+      }
+  
+      cb(undefined, true);
+    }
+  });
+
+router.put("/user/avatar", upload.single('avatar'), userControl.uploadAvatar);
+
+// ---------GET AVATAR---------------//
+router.get("/user/avatar/:img", userControl.getAvatar)
 
 //--------REGISTER USER--------------//
 // save data user to database

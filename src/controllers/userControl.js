@@ -2,6 +2,11 @@ const bcrypt = require('bcryptjs');
 const isEmail = require('validator/lib/isEmail');
 
 const conn = require('./../connection/connection');
+const path = require("path");
+const uploadDir = path.join(__dirname + "/../../avatar/");
+
+
+
 
 module.exports = {
     userRegister: async (req, res) => {
@@ -84,5 +89,17 @@ module.exports = {
             if(err) return res.status(400).send(err.sqlMessage)
             res.send(result)
         })
+    },
+    uploadAvatar: (req, res) => {
+        const sql = `UPDATE users SET avatar = '${req.file.filename}' WHERE userId = ${req.body.userId}`;
+    
+        conn.query(sql, (err, result) => {
+            if(err) return res.status(400).send(err.sqlMessage);
+
+            res.status(200).send({result, img:req.file.filename})
+        })
+    },
+    getAvatar: (req, res) => {
+        res.sendFile(uploadDir + "/" + req.params.img)
     }
 }
