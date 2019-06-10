@@ -3,6 +3,7 @@ const isEmail = require('validator/lib/isEmail');
 
 const conn = require('./../connection/connection');
 const path = require("path");
+const fs = require("fs");
 const uploadDir = path.join(__dirname + "/../../avatar/");
 
 
@@ -92,7 +93,10 @@ module.exports = {
     },
     uploadAvatar: (req, res) => {
         const sql = `UPDATE users SET avatar = '${req.file.filename}' WHERE userId = ${req.body.userId}`;
-    
+        if(req.body.oldImg) {
+            fs.unlinkSync(uploadDir + "/" + req.body.oldImg)
+        }
+        
         conn.query(sql, (err, result) => {
             if(err) return res.status(400).send(err.sqlMessage);
 
