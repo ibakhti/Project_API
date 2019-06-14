@@ -19,6 +19,24 @@ router.post("/products", (req, res) => {
   });
 });
 
+// ----------ADD PRODUCTS SIZE AND STOCK------//
+router.post("/products/size", (req, res) => {
+  const data = {
+    sku: req.body.sku,
+    unitSize: req.body.unitSize,
+    unitStock: req.body.unitStock,
+    stockDisplay: req.body.unitStock
+  };
+
+  const sql = `INSERT INTO productSizeAndStock set ?`
+
+  conn.query(sql, data, (err, result) => {
+    if(err) return res.status(400).send(err.sqlMessage);
+
+    res.status(200).send(result);
+  })
+})
+
 //----------ADD PICTURES PRODUCTS---------//
 const Storage = multer.diskStorage({
   destination: function(req, file, cb) {
@@ -54,7 +72,7 @@ router.post("/picture/upload/:sku", upload.single("img"), async (req, res) => {
   conn.query(sql, data, (err, result) => {
     if (err) return res.status(400).send(err.sqlMessage);
 
-    res.status(200).send("success");
+    res.status(200).send({result, url: `http://localhost:8080/picture/${req.file.filename}`});
   });
 });
 
@@ -264,6 +282,15 @@ router.get("/search/size", (req, res) => {
     })
 });
 
+router.get("/allproduct", (req, res) => {
+  const sql = `SELECT * FROM products`
+
+  conn.query(sql, (err, result) => {
+    if(err) return res.status(400).send(err.sqlMessage);
+
+    res.status(200).send(result)
+  })
+})
 
 
 module.exports = router;
