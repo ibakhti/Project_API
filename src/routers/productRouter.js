@@ -13,7 +13,7 @@ router.post("/products", (req, res) => {
   const sql = `INSERT INTO products SET ?`;
 
   conn.query(sql, data, (err, result) => {
-    if (err) return res.status(400).send(err.sqlMessage);
+    if (err) return res.status(200).send(err.sqlMessage);
 
     res.send(result);
   });
@@ -27,13 +27,21 @@ router.post("/products/size", (req, res) => {
     unitStock: req.body.unitStock,
     stockDisplay: req.body.unitStock
   };
+  const sql = `SELECT productId FROM productSizeAndStock WHERE sku = ${req.body.sku} AND unitSize = ${req.body.unitSize}`
+  const sql2 = `INSERT INTO productSizeAndStock set ?`
 
-  const sql = `INSERT INTO productSizeAndStock set ?`
+  conn.query(sql, (err, result) => {
+    if(err) return res.send(err.sqlMessage)
 
-  conn.query(sql, data, (err, result) => {
-    if(err) return res.status(400).send(err.sqlMessage);
-
-    res.status(200).send(result);
+    if(result.length !== 0){
+      res.send({exist: 1})
+    }else{
+      conn.query(sql2, data, (err, result) => {
+        if(err) return res.status(400).send(err.sqlMessage);
+    
+        res.status(200).send(result);
+      })
+    }
   })
 })
 
@@ -74,6 +82,19 @@ router.post("/picture/upload/:sku", upload.single("img"), async (req, res) => {
 
     res.status(200).send({result, url: `http://localhost:8080/picture/${req.file.filename}`});
   });
+});
+
+// ----UPDATE PRODUCT PICT----//
+router.put("/picture/update/:oldName", upload.single("img"), async (req, res) => {
+  const sql = `UPDATE productPicts SET img='${req.file.filename}' WHERE imgId=${req.body.imgId}`
+  // console.log([req.file.filename, req.params.oldName, req.body.imgId])
+  conn.query(sql, (err, result) => {
+    if(err) return res.send(err.sqlMessage)
+    
+    fs.unlinkSync(uploadDir + req.params.oldName);
+    res.send({result, url:`http://localhost:8080/picture/${req.file.filename}`});
+  });
+  
 });
 
 //-------GET PRODUCT PICT--------//
@@ -282,13 +303,94 @@ router.get("/search/size", (req, res) => {
     })
 });
 
+// --------ALL PRODUCT FOR MANAGE PRODUCT---//
 router.get("/allproduct", (req, res) => {
-  const sql = `SELECT * FROM products`
+  const sql = `SELECT * FROM productView`
 
   conn.query(sql, (err, result) => {
     if(err) return res.status(400).send(err.sqlMessage);
 
     res.status(200).send(result)
+  })
+})
+
+
+// -----------PRODUCT FOR EDIT----------//
+router.get("/edit", (req, res) => {
+  const sql = `SELECT * FROM productView WHERE productId = ${req.query.productId}`
+
+  conn.query(sql, (err, result) => {
+    if(err) return res.send(err.sqlMessage);
+
+    res.send(result)
+  })
+})
+
+//---------GET PRODUCT PICT----------//
+router.get("/edit/pict", (req, res) => {
+  const sql = `SELECT imgId, img FROM productPicts WHERE sku = ${req.query.sku}`
+
+  conn.query(sql, (err, result) => {
+    if(err) return res.send(err.sqlMessage);
+
+    res.send([{imgId: result[0].imgId, url1:`http://localhost:8080/picture/${result[0].img}`}, { imgId: result[1].imgId, url2:`http://localhost:8080/picture/${result[1].img}`}, {imgId: result[2].imgId, url3:`http://localhost:8080/picture/${result[2].img}` }])
+  })
+})
+
+// -----UPDATE PRODUCT--------------//
+router.put("/product/update", (req, res) => {
+  const data = req.body;
+  const sql = `UPDATE products SET ? WHERE sku = ${req.query.sku}`;
+
+  conn.query(sql, data, (err, result) => {
+    if(err) return res.send(err.sqlMessage);
+
+    res.send(result);
+  });
+});
+
+
+// ----------UPDATE PRODUCT SIZE---------//
+router.put("/product/update/size", (req, res) => {
+  const data = req.body;
+  const sql = `UPDATE productSizeAndStock SET ? WHERE productId=${req.query.productId}`
+
+  conn.query(sql, data, (err, result) => {
+    if(err) return res.send(err.sqlMessage);
+
+    res.send(result);
+  });
+});
+
+// ---------DELETE PRODUCT AND SIZE------//
+router.delete("/product/delete", (req, res) => {
+  const sql = `SELECT COUNT(*) num FROM productSizeAndStock WHERE sku=${req.body.sku}`
+  const sql2 = `DELETE FROM productSizeAndStock WHERE productId=${req.body.productId}`
+  const sql3 = `DELETE FROM products WHERE sku=${req.body.sku}`
+
+  conn.query(sql, (err, result) => {
+    if(err) return res.send(err.sqlMessage);
+
+    // console.log(result[0].num)
+    if(result[0].num === 1){
+      // console.log(1)
+      conn.query(sql2, (err, result) => {
+        if(err) return res.send(err.sqlMessage)
+
+        conn.query(sql3, (err, result) => {
+          if(err) return res.send(err.sqlMessage)
+
+          res.send(result)
+        })
+      })
+    }else {
+      // console.log(2)
+      conn.query(sql2, (err, result) => {
+        if(err) return res.send(err.sqlMessage);
+
+        res.send(result)
+      })
+    }
   })
 })
 
