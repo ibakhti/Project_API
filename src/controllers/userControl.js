@@ -93,7 +93,7 @@ module.exports = {
     },
     uploadAvatar: (req, res) => {
         const sql = `UPDATE users SET avatar = '${req.file.filename}' WHERE userId = ${req.body.userId}`;
-        if(req.body.oldImg) {
+        if(req.body.oldImg !== "null") {
             fs.unlinkSync(uploadDir + "/" + req.body.oldImg)
         }
         
