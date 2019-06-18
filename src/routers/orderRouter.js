@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const conn = require("../connection/connection");
 const multer = require("multer");
+const fs = require("fs");
 const path = require("path");
 
 const uploadDir = path.join(__dirname + "/../../paymentPict/");
@@ -267,12 +268,21 @@ router.get("/admin/customer", (req, res) => {
 
 //--------DENY CUSTOMER PAY SLIP-----//
   router.delete("/admin/deny", (req, res) => {
-    const sql = `UPDATE orders SET transferImg = '' WHERE orderId = ${req.body.orderId}`
+    const sql1 = `SELECT transferImg FROM orders WHERE orderId=${req.body.orderId}`
+    const sql2 = `UPDATE orders SET transferImg = '' WHERE orderId = ${req.body.orderId}`
 
-  conn.query(sql, (err, result) => {
+  conn.query(sql1, (err, result) => {
     if(err) return res.send(err.sqlMessage);
 
-    res.send(result)
+    if(result[0].transferImg){
+      fs.unlinkSync(upDirtrf + "/" + result[0].transferImg)
+
+      conn.query(sql2, (err, result) => {
+        if(err) return res.send(err.sqlMessage);
+
+        res.send(result)
+      })
+    }
   });
   });
 
