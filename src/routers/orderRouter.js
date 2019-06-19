@@ -308,4 +308,23 @@ router.get("/admin/customer", (req, res) => {
     })
   })
 
+  // -------DELETE STOCK------------//
+  router.put("/order/delete", (req, res) => {
+    const sql = `SELECT unitStock FROM productSizeAndStock WHERE productId = ${req.body.productId}`
+    
+    conn.query(sql, (err, result) => {
+      if(err) return res.send("err1: " + err.sqlMessage);
+      const sql2 = `UPDATE productSizeAndStock SET unitStock = ${result[0].unitStock - 1} WHERE productId = ${req.body.productId}`
+
+      conn.query(sql2, (err, result) => {
+        if(err) return res.send("err2 " + err.sqlMessage);
+
+        res.send(result)
+      })
+
+    })
+  
+  })
+
+
 module.exports = router;

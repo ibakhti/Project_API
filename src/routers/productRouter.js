@@ -102,6 +102,19 @@ router.get("/picture/:img", (req, res) => {
   res.sendFile(uploadDir + "/" + req.params.img);
 });
 
+// --------GET NEWEST PRODUCT-----//
+router.get("/product/new", (req, res) => {
+  const sql = `SELECT	* FROM productPictView WHERE	img NOT LIKE '%a%' ORDER BY timeAdded desc LIMIT 3`
+
+  conn.query(sql, (err, result) => {
+    if(err) return res.send(err.sqlMessage);
+
+    res.send(result)
+  });
+});
+
+
+
 //-------GET PRODUCT PICT BY CATEGORY--------//
 router.get("/product/picture", (req, res) => {
   const sql = `SELECT * FROM productPictView WHERE category = '${
@@ -394,5 +407,16 @@ router.delete("/product/delete", (req, res) => {
   })
 })
 
+
+// --------GET POPULAR PRODUCT----//
+router.get("/product/popular", (req, res) => {
+  const sql = `SELECT * FROM productPopulerView LIMIT 2`
+
+  conn.query(sql, (err, result) => {
+    if(err) return res.send(err.sqlMessage);
+
+    res.send(result);
+  })
+})
 
 module.exports = router;
