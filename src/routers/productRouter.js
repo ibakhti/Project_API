@@ -419,4 +419,37 @@ router.get("/product/popular", (req, res) => {
   })
 })
 
+// -----------ADD WAITING LIST--------//
+router.put("/waiting", (req, res) => {
+  const sql = `INSERT INTO waitingList SET ?`
+  const data = req.body
+
+  conn.query(sql, data, (err, result) => {
+    if(err) return res.send(err.sqlMessage);
+
+    res.send(result);
+  })
+});
+
+// -----------GET WAITING LIST----------//
+router.get("/waiting/get", (req, res) => {
+  const sql = `SELECT * FROM waitingListView WHERE userId=${req.query.userId}`
+
+  conn.query(sql, (err, result) => {
+    if(err) return res.send(err.sqlMessage);
+
+    res.send(result);
+  });
+});
+
+// ----------DELETE WAITING----------//
+router.delete("/waiting", (req, res) => {
+  const sql = `DELETE FROM waitingList WHERE id = ${req.body.id}`;
+
+  conn.query(sql, (err, result) => {
+    if(err) return res.send(err.sqlMessage);
+
+    res.send(result)
+  })
+})
 module.exports = router;
