@@ -326,5 +326,15 @@ router.get("/admin/customer", (req, res) => {
   
   })
 
+  // ---------COUNT UNCOMPLETE ORDER---//
+  router.get("/count", (req, res) => {
+    const sql = `SELECT Count(*) noFulfillOrder FROM orders WHERE	fulfill = 0;`
+
+    conn.query(sql, (err, result) => {
+      if(err) return res.send(err.sqlMessage);
+
+      res.send(result)
+    })
+  })
 
 module.exports = router;

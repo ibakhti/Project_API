@@ -421,14 +421,25 @@ router.get("/product/popular", (req, res) => {
 
 // -----------ADD WAITING LIST--------//
 router.put("/waiting", (req, res) => {
+  const sqls = `SELECT productId FROM waitingList WHERE userId=${req.body.userId} AND productId=${req.body.productId}`
   const sql = `INSERT INTO waitingList SET ?`
   const data = req.body
 
-  conn.query(sql, data, (err, result) => {
+  conn.query(sqls, (err, result) => {
     if(err) return res.send(err.sqlMessage);
 
-    res.send(result);
+    // res.send(result)
+    if(!result[0].productId){
+      conn.query(sql, data, (err, result) => {
+        if(err) return res.send(err.sqlMessage);
+    
+        res.send(result);
+      })
+    }else {
+      res.status(200).send("exist")
+    }
   })
+  
 });
 
 // -----------GET WAITING LIST----------//
