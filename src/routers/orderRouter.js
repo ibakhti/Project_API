@@ -3,9 +3,13 @@ const conn = require("../connection/connection");
 const multer = require("multer");
 const fs = require("fs");
 const path = require("path");
+const generateInvoice = require("./../email/invoice");
+const sendMail = require("./../email/nodemailer");
 
 const uploadDir = path.join(__dirname + "/../../paymentPict/");
 const upDirtrf = path.join(__dirname + "/../../trfPict");
+
+const parentPath = path.join(__dirname, "../..");
 
 //----------GET ITMES FOR CHECKOUT-----------//
 router.get("/checkout", (req, res) => {
@@ -186,12 +190,10 @@ router.put("/payslip", up.single("payslip"), (req, res) => {
   conn.query(sql, (err, result) => {
     if (err) return res.status(400).send(err.sqlMessage);
 
-    res
-      .status(200)
-      .send({
-        result,
-        url: `http://localhost:8080/payslip/picture/${req.file.filename}`
-      });
+    res.status(200).send({
+      result,
+      url: `http://localhost:8080/payslip/picture/${req.file.filename}`
+    });
   });
 });
 
@@ -243,8 +245,19 @@ router.get("/admin/order/fulfill", (req, res) => {
 
 // -------GET ORDER DETAIL FOR ADMIN-----//
 router.get("/admin/detail", (req, res) => {
-  const sql = `SELECT * FROM orderDetails WHERE orderId = ${
-    req.query.orderId
+  const sql = `SELECT * FROM orderDetails WHERE orderId = ${req.query.orderId}`;
+
+  conn.query(sql, (err, result) => {
+    if (err) return res.send(err.sqlMessage);
+
+    res.send(result);
+  });
+});
+
+// -------------GET CUSTOMER DATA ------//
+router.get("/admin/customer", (req, res) => {
+  const sql = `SELECT * FROM customerDataView WHERE userId = ${
+    req.query.userId
   }`;
 
   conn.query(sql, (err, result) => {
@@ -254,87 +267,155 @@ router.get("/admin/detail", (req, res) => {
   });
 });
 
+//--------DENY CUSTOMER PAY SLIP-----//
+router.delete("/admin/deny", (req, res) => {
+  const sql1 = `SELECT transferImg FROM orders WHERE orderId=${
+    req.body.orderId
+  }`;
+  const sql2 = `UPDATE orders SET transferImg = '' WHERE orderId = ${
+    req.body.orderId
+  }`;
 
-// -------------GET CUSTOMER DATA ------//
-router.get("/admin/customer", (req, res) => {
-  const sql = `SELECT * FROM customerDataView WHERE userId = ${req.query.userId}`
+  conn.query(sql1, (err, result) => {
+    if (err) return res.send(err.sqlMessage);
+
+    if (result[0].transferImg) {
+      fs.unlinkSync(upDirtrf + "/" + result[0].transferImg);
+
+      conn.query(sql2, (err, result) => {
+        if (err) return res.send(err.sqlMessage);
+
+        res.send(result);
+      });
+    }
+  });
+});
+
+// -------GET ADDRESS----//
+router.get("/admin/address", (req, res) => {
+  const sql = `SELECT * FROM customerDataView WHERE userId = ${
+    req.query.userId
+  }`;
 
   conn.query(sql, (err, result) => {
-    if(err) return res.send(err.sqlMessage);
+    if (err) return res.send(err.sqlMessage);
 
     res.send(result);
   });
 });
 
-//--------DENY CUSTOMER PAY SLIP-----//
-  router.delete("/admin/deny", (req, res) => {
-    const sql1 = `SELECT transferImg FROM orders WHERE orderId=${req.body.orderId}`
-    const sql2 = `UPDATE orders SET transferImg = '' WHERE orderId = ${req.body.orderId}`
+// -----FULLFIL ORDER---//
+router.put("/admin/sent", (req, res) => {
+  const sql = `UPDATE orders SET fulfill = 1 WHERE orderId = ${
+    req.body.orderId
+  }`;
 
-  conn.query(sql1, (err, result) => {
-    if(err) return res.send(err.sqlMessage);
+  conn.query(sql, (err, result) => {
+    if (err) return res.send(err.sqlMessage);
 
-    if(result[0].transferImg){
-      fs.unlinkSync(upDirtrf + "/" + result[0].transferImg)
+    res.send(result);
+  });
+});
 
-      conn.query(sql2, (err, result) => {
+// -------DELETE STOCK------------//
+router.put("/order/delete", (req, res) => {
+  const sql = `SELECT unitStock FROM productSizeAndStock WHERE productId = ${
+    req.body.productId
+  }`;
+
+  conn.query(sql, (err, result) => {
+    if (err) return res.send("err1: " + err.sqlMessage);
+    const sql2 = `UPDATE productSizeAndStock SET unitStock = ${result[0]
+      .unitStock - 1} WHERE productId = ${req.body.productId}`;
+
+    conn.query(sql2, (err, result) => {
+      if (err) return res.send("err2 " + err.sqlMessage);
+
+      res.send(result);
+    });
+  });
+});
+
+// ---------COUNT UNCOMPLETE ORDER---//
+router.get("/count", (req, res) => {
+  const sql = `SELECT Count(*) noFulfillOrder FROM orders WHERE	fulfill = 0;`;
+
+  conn.query(sql, (err, result) => {
+    if (err) return res.send(err.sqlMessage);
+
+    res.send(result);
+  });
+});
+
+// -----SEND INVOICE TO CUSTOMER---//
+router.put("/invoice", (req, res) => {
+  const sql = `SELECT * FROM orderDetailView WHERE userId=${
+    req.body.userId
+  } AND orderId=${req.body.orderId}`;
+  const sql2 = `SELECT price FROM  orderAdminView WHERE userId=${
+    req.body.userId
+  } AND orderId=${req.body.orderId}`;
+  const sql3 = `SELECT firstName, lastName, email FROM users WHERE userId=${
+    req.body.userId
+  }`;
+
+  conn.query(sql, (err, result1) => {
+    if (err) return res.send(err.sqlMessage);
+
+    conn.query(sql2, (err, result2) => {
+      if (err) return res.send(err.sqlMessage);
+
+      // res.send([result1, result])
+      conn.query(sql3, (err, result3) => {
         if(err) return res.send(err.sqlMessage);
 
-        res.send(result)
-      })
-    }
-  });
-  });
+        const items = result1.map(item => {
+          return {
+            name: `${item.productName} ${item.size}`,
+            quantity: item.quantity,
+            unit_cost: item.unitPrice
+          };
+        });
+        const name = `${result3[0].firstName} ${result3[0].lastName}`;
+        const email = result3[0].email;
 
-  // -------GET ADDRESS----//
-  router.get("/admin/address", (req, res) => {
-    const sql = `SELECT * FROM customerDataView WHERE userId = ${req.query.userId}`
-
-    conn.query(sql, (err, result) => {
-      if(err) return res.send(err.sqlMessage);
-
-      res.send(result)
-    })
-  });
-
-  // -----FULLFIL ORDER---//
-  router.put("/admin/sent", (req, res) => {
-    const sql = `UPDATE orders SET fulfill = 1 WHERE orderId = ${req.body.orderId}`;
-
-    conn.query(sql, (err, result) => {
-      if(err) return res.send(err.sqlMessage)
-
-      res.send(result)
-    })
-  })
-
-  // -------DELETE STOCK------------//
-  router.put("/order/delete", (req, res) => {
-    const sql = `SELECT unitStock FROM productSizeAndStock WHERE productId = ${req.body.productId}`
-    
-    conn.query(sql, (err, result) => {
-      if(err) return res.send("err1: " + err.sqlMessage);
-      const sql2 = `UPDATE productSizeAndStock SET unitStock = ${result[0].unitStock - 1} WHERE productId = ${req.body.productId}`
-
-      conn.query(sql2, (err, result) => {
-        if(err) return res.send("err2 " + err.sqlMessage);
-
-        res.send(result)
-      })
-
-    })
+        var invoice = {
+          logo:
+            "https://static1.squarespace.com/static/578dbb17d2b857223fe8cbd0/t/5886ea1586e6c0c012631de7/1555992834192/",
+          from: "BnC Online Store, Jakarta, 11134 Mt.Hartono Jakarta Timur Daya",
+          to: name,
+          currency: "usd",
+          number: req.body.orderId,
+          payment_terms: "Your payment has been accept",
+          items: items,
+          shipping: result2[0].price,
+          notes: "Thanks for shopping with us!",
+          terms: "you product has been send"
+        };
+        const fileDir = path.join(
+          parentPath,
+          `src/invoice/invoice${req.body.orderId}.pdf`
+        );
   
-  })
+        generateInvoice(
+          invoice,
+          fileDir,
+          function() {
+            console.log("Saved invoice to invoice.pdf");
+            // res.sendFile(fileDir)
+  
+            sendMail(email, fileDir);
+  
+            res.sendStatus(200);
+          },
+          function(error) {
+            console.error(error);
+          }
+        );
+      })
+    });
+  });
+});
 
-  // ---------COUNT UNCOMPLETE ORDER---//
-  router.get("/count", (req, res) => {
-    const sql = `SELECT Count(*) noFulfillOrder FROM orders WHERE	fulfill = 0;`
-
-    conn.query(sql, (err, result) => {
-      if(err) return res.send(err.sqlMessage);
-
-      res.send(result)
-    })
-  })
 
 module.exports = router;

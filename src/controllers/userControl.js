@@ -17,11 +17,11 @@ module.exports = {
         data.firstName = data.firstName === '' ? null : data.firstName;
         data.lastName = data.lastName === '' ? null : data.lastName;
     
-        if (!isEmail(data.email)) return res.status(400).send("Not support Email Format"); 
+        if (!isEmail(data.email)) return res.send("Not support Email Format"); 
         data.password = await bcrypt.hash(data.password, 8);
     
         conn.query(sql, data, (err, result) => {
-            err ? res.status(400).send(err.sqlMessage) : res.status(200).send(result)
+            err ? res.send(err.sqlMessage) : res.status(200).send(result)
         });
     },
     userLogin: (req, res) => {
@@ -41,7 +41,7 @@ module.exports = {
         const sql = `SELECT * FROM users WHERE userId = ${id}`
         
         conn.query(sql, (err, result) => {
-            err ? res.status(400).send(err.sqlMessage) : res.send(result)
+            err ? res.send(err.sqlMessage) : res.send(result)
         })
     },
     userUpdate: (req, res) => {
@@ -49,7 +49,7 @@ module.exports = {
         const sql = `UPDATE users SET ? WHERE userId = ?`;
         
         conn.query(sql, data, (err, result) => {
-            if(err) return res.status(400).send(err.sqlMessage)
+            if(err) return res.send(err.sqlMessage)
             res.send(result)
         })
     },
@@ -67,7 +67,7 @@ module.exports = {
     },
     addressRegister: (req, res) => {
         const sql = 'INSERT INTO address SET ?';
-        const data = req.body; 
+        const data = req.body;
     
         conn.query(sql, data, (err, result) => {
             err ? res.send(err.sqlMessage) : res.send(result)

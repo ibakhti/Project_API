@@ -1,4 +1,6 @@
 node_modules/
 pictures/
-paymentPict/
+trfPict/
 avatar/
+src/email/
+src/invoice/
