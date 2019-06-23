@@ -429,7 +429,7 @@ router.put("/waiting", (req, res) => {
     if(err) return res.send(err.sqlMessage);
 
     // res.send(result)
-    if(!result[0].productId){
+    if(result.length === 0){
       conn.query(sql, data, (err, result) => {
         if(err) return res.send(err.sqlMessage);
     
