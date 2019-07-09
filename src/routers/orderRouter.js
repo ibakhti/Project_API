@@ -317,6 +317,17 @@ router.put("/admin/sent", (req, res) => {
   });
 });
 
+// ------REMOVE ORDER---//
+router.delete('/admin/order/delete', (req, res) => {
+  const sql = `DELETE FROM orders WHERE orderId = ${req.body.orderId}`
+
+  conn.query(sql, (err, result) => {
+    if (err) return res.send(err.sqlMessage);
+
+    res.send(result)
+  })
+});
+
 // -------DELETE STOCK------------//
 router.put("/order/delete", (req, res) => {
   const sql = `SELECT unitStock FROM productSizeAndStock WHERE productId = ${
