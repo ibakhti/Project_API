@@ -268,7 +268,9 @@ router.delete("/allcart", (req, res) => {
 
 router.get("/search/productName", (req, res) => {
     const sql = `SELECT * FROM productPictView WHERE productName LIKE '%${req.query.name}%' AND img NOT LIKE '%a%'`
-
+    if(!req.query.name | req.query.name.match(/[[|\]|`|~|\\|||*|$|%|#|@|?|>|<|/|!|+|'|_|=|^|&|*|(|)|{|}|]/)){
+      return
+    }
     conn.query(sql, (err, result) => {
         if(err) return res.status(400).send(err.sqlMessage);
 
@@ -278,7 +280,9 @@ router.get("/search/productName", (req, res) => {
 
 router.get("/search/color", (req, res) => {
     const sql = `SELECT * FROM productPictView WHERE color LIKE '%${req.query.color}%' AND img NOT LIKE '%a%'`
-
+    if(!req.query.color | req.query.color.match(/[[|\]|`|~|\\|||*|$|%|#|@|?|>|<|/|!|+|'|_|=|^|&|*|(|)|{|}|]/)){
+      return
+    }
     conn.query(sql, (err, result) => {
         if(err) return res.status(400).send(err.sqlMessage);
 
@@ -288,7 +292,9 @@ router.get("/search/color", (req, res) => {
 
 router.get("/search/category", (req, res) => {
     const sql = `SELECT * FROM productPictView WHERE category LIKE '${req.query.category}' AND img NOT LIKE '%a%'`
-
+    if(!req.query.category | req.query.category.match(/[[|\]|`|~|\\|||*|$|%|#|@|?|>|<|/|!|+|'|_|=|^|&|*|(|)|{|}|]/)){
+      return
+    }
     conn.query(sql, (err, result) => {
         if(err) return res.status(400).send(err.sqlMessage);
 
