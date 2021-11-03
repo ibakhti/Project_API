@@ -23,6 +23,6 @@
     "mysql": "github:mysqljs/mysql",
     "nodemailer": "^6.2.1",
     "sharp": "^0.22.1",
-    "validator": "^10.11.0"
+    "validator": "^13.7.0"
   }
 }
